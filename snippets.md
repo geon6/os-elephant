@@ -9,4 +9,5 @@ nasm -I include/ -o loader.bin loader.S
 
 # dd
 sudo dd if=./mbr.bin of=/usr/local/bochs/hd60M.img bs=512 count=1 conv=notrunc
+sudo dd if=./loader.bin of=/usr/local/bochs/hd60M.img bs=512 count=4 conv=notrunc seek=2
 ```
