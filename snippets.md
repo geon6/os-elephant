@@ -12,6 +12,7 @@ nasm -I include/ -o loader.bin loader.S
 sudo dd if=./mbr.bin of=/usr/local/bochs/hd60M.img bs=512 count=1 conv=notrunc
 sudo dd if=./loader.bin of=/usr/local/bochs/hd60M.img bs=512 count=4 conv=notrunc seek=2
 sudo dd if=./kernel.bin of=/usr/local/bochs/hd60M.img bs=512 count=200 seek=9 conv=notrunc
+sudo dd if=./kernel/kernel.bin of=/usr/local/bochs/hd60M.img bs=512 count=200 seek=9 conv=notrunc
 
 sudo gcc -c -o main.o main.c && ld main.o -Ttext 0xc0001500 -e main -o kernel.bin && dd if=kernel.bin of=/usr/local/bochs/hd60M.img bs=512 count=200 seek=9 conv=notrunc
 ```
