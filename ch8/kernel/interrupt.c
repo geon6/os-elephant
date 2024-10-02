@@ -11,6 +11,9 @@
 
 #define IDT_DESC_CNT 0x21 // 共支持33个中断
 
+#define EFLAGS_IF   0x00000200
+#define GET_EFLAGS(EFLAG_VAR) asm volatile ("pushfl; popl %0" : "=g" (EFLAG_VAR))
+
 
 // 中断门描述符 参考图7-3
 struct gate_desc {
@@ -108,6 +111,42 @@ static void exception_init() {
     intr_name[17] = "#AC Alignment Check Exception";
     intr_name[18] = "#MC Machine-Check Exception";
     intr_name[19] = "#XF SIMD Floating-Point Exception";
+}
+
+// 开中断, 返回值是之前的状态
+enum intr_status intr_enable() {
+    enum intr_status old_status;
+    if (INTR_ON == intr_get_status()) {
+        old_status = INTR_ON;
+        return old_status;
+    } else {
+        old_status = INTR_OFF;
+        asm volatile("sti"); // 开中断指令
+        return old_status;
+    }
+}
+
+// 关中断, 返回值是之前的状态
+enum intr_status intr_disable() {
+    enum intr_status old_status;
+    if (INTR_ON == intr_get_status()) {
+        old_status = INTR_ON;
+        asm volatile("cli" : : : "memory"); // 关中断指令
+        return old_status;
+    } else {
+        old_status = INTR_OFF;
+        return old_status;
+    }
+}
+
+enum intr_status intr_set_status(enum intr_status status) {
+    return status & INTR_ON ? intr_enable() : intr_disable();
+}
+
+enum intr_status intr_get_status() {
+    uint32_t eflags = 0;
+    GET_EFLAGS(eflags);
+    return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
 }
 
 // interrupt descriptor table init
