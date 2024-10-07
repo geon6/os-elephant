@@ -59,7 +59,7 @@ int8_t strcmp(const char* a, const char* b) {
     return *a < *b ? -1 : *a > *b;
 }
 
-char* strchr(const char* str, cosnt uint8_t ch) {
+char* strchr(const char* str, const uint8_t ch) {
     ASSERT(str != NULL);
     while (*str != 0) {
         if (*str == ch) {
