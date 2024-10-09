@@ -12,7 +12,8 @@ LDFLAGS = -m elf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
  	$(BUILD_DIR)/timer.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o \
 	$(BUILD_DIR)/debug.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/bitmap.o \
-	$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o
+	$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o $(BUILD_DIR)/list.o \
+	$(BUILD_DIR)/switch.o
 
 # mbr
 $(BUILD_DIR)/mbr.bin: boot/mbr.S
@@ -52,11 +53,18 @@ $(BUILD_DIR)/memory.o: kernel/memory.c kernel/memory.h lib/stdint.h lib/kernel/b
 $(BUILD_DIR)/thread.o: thread/thread.c thread/thread.h lib/stdint.h kernel/global.h lib/kernel/bitmap.h kernel/memory.h lib/string.h lib/stdint.h lib/kernel/print.h kernel/interrupt.h kernel/debug.h
 	$(CC) $(CFLAGS) $< -o $@
 
+$(BUILD_DIR)/list.o: lib/kernel/list.c lib/kernel/list.h kernel/global.h \
+ 	lib/stdint.h kernel/interrupt.h
+	$(CC) $(CFLAGS) $< -o $@
+
 # asm
 $(BUILD_DIR)/kernel.o: kernel/kernel.S
 	$(AS) $(ASFLAGS) $< -o $@
 
 $(BUILD_DIR)/print.o: lib/kernel/print.S
+	$(AS) $(ASFLAGS) $< -o $@
+
+$(BUILD_DIR)/switch.o: thread/switch.S
 	$(AS) $(ASFLAGS) $< -o $@
 
 # ld

@@ -1,6 +1,8 @@
 #ifndef __THREAD_THREAD_H
 #define __THREAD_THREAD_H
+
 #include "stdint.h"
+#include "list.h"
 
 // 线程运行的函数, 参数定义为void*后面再转换为对应数据. 跟posix那个差不多
 typedef void thread_func(void*);
@@ -61,13 +63,32 @@ struct thread_stack {
 struct task_struct {
     uint32_t* self_kstack;      // 内核栈
     enum task_status status;    
-    uint8_t priority;           // 优先级
     char name[16];
+    uint8_t priority;           // 优先级
+    uint8_t ticks;  // 每次在处理器上执行的时间, 也就是所谓的时间片
+                    // 每次时间中断都会减一, 到0的时候就被换下cpu
+                    // prio越大, tick越大, 可以执行越久
+
+    // 任务执行了多久(占用cpu时间). 从开始到结束(换上换下cpu都不会清0)
+    uint32_t elapsed_ticks;
+
+    // 用于一般队列中的结点
+    struct list_elem general_tag;
+
+    // 用于thread_all_list中的结点
+    struct list_elem all_list_tag;
+
+    // 进程自己页表的虚拟地址
+    uint32_t* pgdir;
+
     uint32_t stack_magic;       // 边界标记, 用于检测栈的溢出
 };
 
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg);
 void init_thread(struct task_struct* pthread, char* name, int prio);
 struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg);
+struct task_struct* running_thread();
+void schedule();
+void thread_init();
 
 #endif
