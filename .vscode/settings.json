@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "memory.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "timer.h": "c",
+        "console.h": "c",
+        "sync.h": "c",
+        "debug.h": "c"
     }
 }

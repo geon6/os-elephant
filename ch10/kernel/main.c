@@ -1,7 +1,7 @@
 #include "print.h"
 #include "init.h"
 #include "thread.h"
-
+#include "console.h"
 
 void k_thread_a(void*);
 void k_thread_b(void*);
@@ -14,27 +14,30 @@ void main() {
     thread_start("k_thread_b", 8, k_thread_b, "argB ");
     
     intr_enable(); // 打开中断, 时钟中断促使切换线程
+    int i = 999999;
     while (1) {
-        intr_disable();
-        put_str("main ");
-        intr_enable();
+        while (i--);
+        i = 999999;
+        console_put_str("main ");
     }
 }
 
 void k_thread_a(void* arg) {
     char* para = arg;
+    int i = 999999;
     while (1) {
-        intr_disable();
-        put_str(para);
-        intr_enable();
+        while (i--);
+        i = 999999;
+        console_put_str(arg);
     }
 }
 
 void k_thread_b(void* arg) {
     char* para = arg;
+    int i = 999999;
     while (1) {
-        intr_disable();
-        put_str(para);
-        intr_enable();
+        while (i--);
+        i = 999999;
+        console_put_str(arg);
     }
 }
