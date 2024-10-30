@@ -10,16 +10,17 @@ void main() {
     put_str("I am kernel\n");
     init_all();
 
-    thread_start("k_thread_a", 31, k_thread_a, "argA ");
-    thread_start("k_thread_b", 8, k_thread_b, "argB ");
+    // thread_start("k_thread_a", 31, k_thread_a, "argA ");
+    // thread_start("k_thread_b", 8, k_thread_b, "argB ");
     
     intr_enable(); // 打开中断, 时钟中断促使切换线程
-    int i = 999999;
-    while (1) {
-        while (i--);
-        i = 999999;
-        console_put_str("main ");
-    }
+    while (1);
+    // int i = 999999;
+    // while (1) {
+    //     while (i--);
+    //     i = 999999;
+    //     console_put_str("main ");
+    // }
 }
 
 void k_thread_a(void* arg) {

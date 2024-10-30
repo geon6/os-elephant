@@ -9,7 +9,7 @@
 #define PIC_S_CTRL 0xa0     // PIC slave control port
 #define PIC_S_DATA 0xa1     // PIC slave data port
 
-#define IDT_DESC_CNT 0x21   // 共支持33个中断
+#define IDT_DESC_CNT 0x30   // 支持的中断数目
 
 #define EFLAGS_IF   0x00000200
 #define GET_EFLAGS(EFLAG_VAR) asm volatile ("pushfl; popl %0" : "=g" (EFLAG_VAR))
@@ -47,8 +47,13 @@ static void pic_init() {
     outb (PIC_S_DATA, 0x01);
 
     // 只打开主片上的IRQ0, 也就是时钟中断. 参考图7-11
-    outb (PIC_M_DATA, 0xfe);
+    // outb (PIC_M_DATA, 0xfe);
+    // outb (PIC_S_DATA, 0xff);
+
+    // 打开键盘中断
+    outb (PIC_M_DATA, 0xfd);
     outb (PIC_S_DATA, 0xff);
+
 
     put_str("   pic_init done\n");
 }
