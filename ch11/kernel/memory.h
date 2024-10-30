@@ -38,6 +38,12 @@ void* malloc_page(enum pool_flags pf, uint32_t pg_cnt);
 // 这个函数分配成功指的是分配虚拟页和物理页都成功了, 并且在页表中建立了映射.
 void* get_kernel_pages(uint32_t pg_cnt);
 
+
+
+void* get_a_page(enum pool_flags pf, uint32_t vaddr);
+
+uint32_t addr_v2p(uint32_t vaddr);
+
 void mem_init(void);
 
 #endif

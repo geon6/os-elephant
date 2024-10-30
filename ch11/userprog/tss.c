@@ -4,6 +4,13 @@
 #include "string.h"
 #include "print.h"
 
+// 参考图11-4. 
+// TSS里面基本都是寄存器, 表示他们的状态
+// 使用 TSS 唯一的理由是为 0 特权级的任务提供栈
+// 具体, 切换进程时, 把ss0和esp0更新为对应的内核栈的段地址及栈指针
+// 为什么不完全用TSS?
+// 1. 效率低下  2. TSS需要在GDT中注册, GDT最多有8192个项, 我们需要更多的进程数
+// linux中pid默认最大为32768, 还可以修改为更大的
 struct tss {
     uint32_t backlink;
     uint32_t* esp0;
@@ -36,7 +43,9 @@ struct tss {
 
 static struct tss tss;
 
+// 将tss中esp0修改为参数pthread的0级栈地址
 void update_tss_esp(struct task_struct* pthread) {
+    // pthread指向pcb, pcb再往上一页就是内核栈
     tss.esp0 = (uint32_t*)((uint32_t)pthread + PG_SIZE);
 }
 
@@ -52,12 +61,15 @@ static struct gdt_desc make_gdt_desc(uint32_t* desc_addr, uint32_t limit, uint8_
     return desc;
 }
 
+// 再gdt中创建tss, 并重新加载gdt
 void tss_init() {
     put_str("tss_init start\n");
     uint32_t tss_size = sizeof(tss);
     memset(&tss, 0, tss_size);
     tss.ss0 = SELECTOR_K_STACK;
     tss.io_base = tss_size;
+
+    // gdt段基址为0x900, 每个gdt desc有64bit
     *((struct gdt_desc*)0xc0000920) = make_gdt_desc(
         (uint32_t*)&tss,
         tss_size - 1,

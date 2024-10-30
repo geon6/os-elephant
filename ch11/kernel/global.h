@@ -58,6 +58,8 @@
 #define IDT_DESC_ATTR_DPL3      ((IDT_DESC_P << 7) + (IDT_DESC_DPL3 << 5) + IDT_DESC_32_TYPE)
 
 //---------------  TSS描述符属性  ------------
+// TSS描述符属于系统段描述符
+// 具体参考图11-3 p489
 #define TSS_DESC_D  0 
 
 #define TSS_ATTR_HIGH ((DESC_G_4K << 7) + (TSS_DESC_D << 6) + (DESC_L << 5) + (DESC_AVL << 4) + 0x0)
@@ -82,6 +84,12 @@ struct gdt_desc {
 #define	 IDT_DESC_16_TYPE     0x6   // 16位的门，不用，定义它只为和32位门区分
 #define	 IDT_DESC_ATTR_DPL0  ((IDT_DESC_P << 7) + (IDT_DESC_DPL0 << 5) + IDT_DESC_32_TYPE)
 #define	 IDT_DESC_ATTR_DPL3  ((IDT_DESC_P << 7) + (IDT_DESC_DPL3 << 5) + IDT_DESC_32_TYPE)
+
+#define EFLAGS_MBS (1 << 1)
+#define EFLAGS_IF_1 (1 << 9)
+#define EFLAGS_IF_0 0
+#define EFLAGS_IOPL_3 (3 << 12)
+#define EFLAGS_IOPL_0 (0 << 12)
 
 #define NULL ((void*)0)
 #define bool int

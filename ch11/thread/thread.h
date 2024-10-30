@@ -3,6 +3,8 @@
 
 #include "stdint.h"
 #include "list.h"
+#include "bitmap.h"
+#include "memory.h"
 
 // 线程运行的函数, 参数定义为void*后面再转换为对应数据. 跟posix那个差不多
 typedef void thread_func(void*);
@@ -72,16 +74,15 @@ struct task_struct {
     // 任务执行了多久(占用cpu时间). 从开始到结束(换上换下cpu都不会清0)
     uint32_t elapsed_ticks;
 
-    // 用于一般队列中的结点
-    struct list_elem general_tag;
+    struct list_elem general_tag; // 用于一般队列中的结点
 
-    // 用于thread_all_list中的结点
-    struct list_elem all_list_tag;
+    struct list_elem all_list_tag; // 用于thread_all_list中的结点
 
-    // 进程自己页表的虚拟地址
-    uint32_t* pgdir;
+    uint32_t* pgdir; // 进程自己页表的虚拟地址
 
-    uint32_t stack_magic;       // 边界标记, 用于检测栈的溢出
+    struct virtual_addr userprog_vaddr; // 用户进程的虚拟地址
+
+    uint32_t stack_magic; // 边界标记, 用于检测栈的溢出
 };
 
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg);
