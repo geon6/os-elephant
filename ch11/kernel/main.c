@@ -26,44 +26,42 @@ void main() {
 
 void k_thread_a(void* arg) {
     char* para = arg;
-    int i = 999999;
+    int i = 99999;
     while (1) {
         while (i--);
-        i = 999999;
+        i = 99999;
         console_put_str(" v_a:0x");
         console_put_int(test_var_a);
-        console_put_str("\n");
     }
 }
 
 void k_thread_b(void* arg) {
     char* para = arg;
-    int i = 999999;
+    int i = 99999;
     while (1) {
         while (i--);
-        i = 999999;
+        i = 99999;
         console_put_str(" v_b:0x");
         console_put_int(test_var_b);
-        console_put_str("\n");
     }
 }
 
 /* 测试用户进程 */
 void u_prog_a(void) {
-    int i = 999999;
+    int i = 99999;
     while(1) {
         while (i--);
-        i = 999999;
+        i = 99999;
         test_var_a++;
     }
 }
 
 /* 测试用户进程 */
 void u_prog_b(void) {
-    int i = 999999;
+    int i = 99999;
     while(1) {
         while (i--);
-        i = 999999;
+        i = 99999;
         test_var_b++;
     }
 }

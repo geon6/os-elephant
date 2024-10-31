@@ -39,7 +39,7 @@ struct pool {
 struct pool kernel_pool, user_pool;
 struct virtual_addr kernel_vaddr; // 用来给内核分配虚拟地址
 
-// pf表示的虚拟内存池中申请pg_cnt个虚拟页
+// pf表示的虚拟内存池中申请pg_cnt个虚拟页, 成功返回虚拟页的起始地址, 失败返回NULL
 static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt) {
     int vaddr_start = 0, bit_idx_start = -1;
     uint32_t cnt = 0;
@@ -53,7 +53,8 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt) {
         }
         vaddr_start = kernel_vaddr.vaddr_start + bit_idx_start * PG_SIZE;
     } else { // 用户内存池
-        struct task_struct* cur = running_thread();
+        struct task_struct* cur = running_thread(); // 获取用户进程
+        // 从用户进程的虚拟地址空间分配虚拟页
         bit_idx_start = bitmap_scan(&cur->userprog_vaddr.vaddr_bitmap, pg_cnt);
         if (bit_idx_start == -1) {
             return NULL;
@@ -165,11 +166,13 @@ void* get_user_pages(uint32_t pg_cnt) {
 void* get_a_page(enum pool_flags pf, uint32_t vaddr) {
     struct pool* mem_pool = pf & PF_KERNEL ? &kernel_pool : &user_pool;
     lock_acquire(&mem_pool->lock);
+
+    // 将pf对应的bitmap对应vaddr位置的bit置1
     struct task_struct* cur = running_thread();
     int32_t bit_idx = -1;
 
-    // 用户进程申请用户内存
-    if (cur->pgdir != NULL && pf == PF_USER) {
+    // pgdir不空说明thread有自己的页目录表和页表. 是用户进程
+    if (cur->pgdir != NULL && pf == PF_USER) { // 用户进程申请用户内存
         bit_idx = (vaddr - cur->userprog_vaddr.vaddr_start) / PG_SIZE;
         ASSERT(bit_idx > 0);
         bitmap_set(&cur->userprog_vaddr.vaddr_bitmap, bit_idx, 1);
@@ -180,10 +183,14 @@ void* get_a_page(enum pool_flags pf, uint32_t vaddr) {
     } else {
         PANIC("get_a_page:not allow kernel alloc userspace or user alloc kernelspace by get_a_page");
     }
+
+    // 获取物理页, 并得到物理地址
     void* page_phyaddr = palloc(mem_pool);
     if (page_phyaddr == NULL) {
         return NULL;
     }
+
+    // 添加虚拟地址到物理地址的映射
     page_table_add((void*)vaddr, page_phyaddr);
     lock_release(&mem_pool->lock);
     return (void*)vaddr;

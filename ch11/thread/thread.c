@@ -106,7 +106,7 @@ void schedule() {
     struct task_struct* next = elem2entry(struct task_struct, general_tag, thread_tag);
     next->status = TASK_RUNNING;
 
-    // 激活页表等
+    // 激活页目录表和页表
     process_activate(next);
     switch_to(cur, next);
 }
