@@ -94,3 +94,34 @@ VECTOR 0x2c,ZERO	      ; ps/2鼠标
 VECTOR 0x2d,ZERO	      ; fpu浮点单元异常
 VECTOR 0x2e,ZERO	      ; 硬盘
 VECTOR 0x2f,ZERO	      ; 保留
+
+;;;;;;;;;;;;;;;;;;; 0x80 号中断 ;;;;;;;;;;;;;;;;;;
+[bits 32]
+extern syscall_table
+section .text
+global syscall_handler
+syscall_handler:
+   push 0 ; 占位用的
+
+   ; 保存上下文环境
+   push ds
+   push es
+   push fs
+   push gs
+   pushad
+
+   ; 保持统一的栈格式, 总之就是占位用的
+   push 0x80
+
+   ; 为system call传入参数
+   push edx
+   push ecx
+   push ebx
+
+   ; 调用system call
+   call [syscall_table + eax * 4]
+   add esp, 12
+
+   ; 调用call后, 有返回值, 存到eax中
+   mov [esp + 8 * 4], eax
+   jmp intr_exit ; 返回, 恢复上下文

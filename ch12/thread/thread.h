@@ -8,6 +8,7 @@
 
 // 线程运行的函数, 参数定义为void*后面再转换为对应数据. 跟posix那个差不多
 typedef void thread_func(void*);
+typedef int16_t pid_t;
 
 // 进程or线程状态
 enum task_status {
@@ -64,6 +65,7 @@ struct thread_stack {
 // 进程or线程的pcb
 struct task_struct {
     uint32_t* self_kstack;      // 内核栈
+    pid_t pid;
     enum task_status status;    
     char name[16];
     uint8_t priority;           // 优先级

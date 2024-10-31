@@ -9,11 +9,12 @@
 #define PIC_S_CTRL 0xa0     // PIC slave control port
 #define PIC_S_DATA 0xa1     // PIC slave data port
 
-#define IDT_DESC_CNT 0x30   // 支持的中断数目
+#define IDT_DESC_CNT 0x81   // 支持的中断数目
 
 #define EFLAGS_IF   0x00000200
 #define GET_EFLAGS(EFLAG_VAR) asm volatile ("pushfl; popl %0" : "=g" (EFLAG_VAR))
 
+extern uint32_t syscall_handler();
 
 // 中断门描述符 参考图7-3
 struct gate_desc {
@@ -65,10 +66,13 @@ static void make_idt_desc(struct gate_desc* p_gdesc,
 
 // 创建所有中断门描述符
 static void idt_desc_init() {
-    int i;
+    int i, lastindex = IDT_DESC_CNT - 1;
     for (i = 0; i < IDT_DESC_CNT; i++) {
         make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]);
     }
+
+    // 系统调用特殊处理, dpl为3, 中断处理程序为syscall_handler
+    make_idt_desc(&idt[lastindex], IDT_DESC_ATTR_DPL3, syscall_handler);
     put_str("   idt_desc_init done\n");
 }
 
