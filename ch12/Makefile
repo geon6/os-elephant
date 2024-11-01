@@ -15,7 +15,8 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 	$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o $(BUILD_DIR)/list.o \
 	$(BUILD_DIR)/switch.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/console.o \
 	$(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o \
-	$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o
+	$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o \
+	$(BUILD_DIR)/stdio.o
 
 boot: $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
 # mbr
@@ -78,7 +79,10 @@ $(BUILD_DIR)/process.o: userprog/process.c
 $(BUILD_DIR)/syscall.o: lib/user/syscall.c
 	$(CC) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/syscall-init.o: userprog/syscall-init.c lib/user/syscall.h
+$(BUILD_DIR)/syscall-init.o: userprog/syscall-init.c
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/stdio.o: lib/stdio.c
 	$(CC) $(CFLAGS) $< -o $@
 
 # asm
