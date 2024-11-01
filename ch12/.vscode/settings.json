@@ -10,6 +10,9 @@
         "ostream": "c",
         "stop_token": "c",
         "streambuf": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "init.h": "c",
+        "thread.h": "c",
+        "memory.h": "c"
     }
 }

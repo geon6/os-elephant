@@ -3,6 +3,7 @@
 
 #include "stdint.h"
 #include "bitmap.h"
+#include "list.h"
 
 // 内存池标记, 用于判断用哪个内存池
 enum pool_flags {
@@ -23,6 +24,20 @@ struct virtual_addr {
     uint32_t vaddr_start;
 };
 
+struct mem_block {
+    struct list_elem free_elem;
+};
+
+// 内存块描述符
+struct mem_block_desc {
+    uint32_t block_size;
+    uint32_t blocks_per_arena;
+    struct list free_list;
+};
+
+#define DESC_CNT 7  // 内存块描述符的个数
+// 内存块大小: 16, 32, 64, 128, 256, 512, 1024
+
 extern struct pool kernel_pool, user_pool;
 
 // 得到虚拟地址vaddr对应的pte指针
@@ -38,11 +53,11 @@ void* malloc_page(enum pool_flags pf, uint32_t pg_cnt);
 // 这个函数分配成功指的是分配虚拟页和物理页都成功了, 并且在页表中建立了映射.
 void* get_kernel_pages(uint32_t pg_cnt);
 
-
-
 void* get_a_page(enum pool_flags pf, uint32_t vaddr);
 
 uint32_t addr_v2p(uint32_t vaddr);
+
+void block_desc_init(struct mem_block_desc* desc_array);
 
 void mem_init(void);
 
