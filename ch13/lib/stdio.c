@@ -46,6 +46,15 @@ uint32_t vsprintf(char* str, const char* format, va_list ap) {
     return strlen(str);
 }
 
+uint32_t sprintf(char* buf, const char* format, ...) {
+    va_list args;
+    uint32_t retval;
+    va_start(args, format);
+    retval = vsprintf(buf, format, args);
+    va_end(args);
+    return retval;
+}
+
 uint32_t printf(const char* format, ...) {
     va_list args;
     va_start(args, format);

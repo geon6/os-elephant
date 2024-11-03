@@ -13,6 +13,7 @@
 #define COUNTER_MODE        2 
 #define READ_WRITE_LATCH    3
 #define PIT_CONTROL_PORT    0x43 /* 0x43是控制字寄存器的位置 */
+#define mil_seconds_per_intr (1000 / IRQ0_FREQUENCY)
 
 uint32_t ticks;
 
@@ -40,6 +41,21 @@ static void intr_timer_handler() {
     }
 }
 
+// 以tick为单位的sleep
+static void ticks_to_sleep(uint32_t sleep_ticks) {
+    uint32_t start_tick = ticks;
+    while (ticks - start_tick < sleep_ticks) {
+        thread_yield();
+    }
+}
+
+// 以毫秒为单位, sleep
+void mtime_sleep(uint32_t m_seconds) {
+    uint32_t sleep_ticks = DIV_ROUND_UP(m_seconds, mil_seconds_per_intr);
+    ASSERT(sleep_ticks > 0);
+    ticks_to_sleep(sleep_ticks);
+}
+
 // 初始化PIT8253
 void timer_init() {
     put_str("timer_init start\n");
@@ -53,4 +69,3 @@ void timer_init() {
     register_handler(0x20, intr_timer_handler);
     put_str("timer_init done\n");
 }
-

@@ -5,6 +5,7 @@
         "timer.h": "c",
         "console.h": "c",
         "sync.h": "c",
-        "debug.h": "c"
+        "debug.h": "c",
+        "interrupt.h": "c"
     }
 }

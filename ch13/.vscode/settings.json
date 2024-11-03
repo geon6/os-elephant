@@ -13,6 +13,8 @@
         "stdio.h": "c",
         "init.h": "c",
         "thread.h": "c",
-        "memory.h": "c"
+        "memory.h": "c",
+        "ide.h": "c",
+        "io.h": "c"
     }
 }

@@ -11,7 +11,7 @@ static inline void outb(uint16_t port, uint8_t data) {
     asm volatile("outb %b0, %w1" : : "a" (data), "Nd" (port));
 }
 
-// 从addr读入word_cnt个字节, 并写入port
+// 从addr读入word_cnt个word, 并写入port
 static inline void outsw(uint16_t port, const void* addr, uint32_t word_cnt) {
     // cld: clear DF(direction flag)
     // rep outsw:重复执行outsw直到寄存器cx变为0
@@ -29,7 +29,7 @@ static inline uint8_t inb(uint16_t port) {
     return data;
 }
 
-// 从port读入word_cnt个字节, 并写入addr
+// 从port读入word_cnt个word, 并写入addr
 static inline void insw(uint16_t port, void* addr, uint32_t word_cnt) {
     asm volatile ("cld; rep insw" : "+D" (addr), "+c" (word_cnt) : "d" (port) : "memory");
 }

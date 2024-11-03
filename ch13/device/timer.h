@@ -3,6 +3,7 @@
 
 #include "stdint.h"
 
+void mtime_sleep(uint32_t m_seconds);
 void timer_init();
 
 #endif
