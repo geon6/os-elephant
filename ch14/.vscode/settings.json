@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "random": "c",
+        "syscall.h": "c",
+        "*.tcc": "c",
+        "exception": "c",
+        "memory_resource": "c",
+        "iosfwd": "c",
+        "new": "c",
+        "ostream": "c",
+        "stop_token": "c",
+        "streambuf": "c",
+        "stdio.h": "c",
+        "init.h": "c",
+        "thread.h": "c",
+        "memory.h": "c",
+        "ide.h": "c",
+        "io.h": "c",
+        "fs.h": "c"
+    }
+}
