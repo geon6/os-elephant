@@ -6,6 +6,8 @@
 #include "bitmap.h"
 #include "memory.h"
 
+#define MAX_FILES_OPEN_PER_PROC 8
+
 // 线程运行的函数, 参数定义为void*后面再转换为对应数据. 跟posix那个差不多
 typedef void thread_func(void*);
 typedef int16_t pid_t;
@@ -75,6 +77,10 @@ struct task_struct {
 
     // 任务执行了多久(占用cpu时间). 从开始到结束(换上换下cpu都不会清0)
     uint32_t elapsed_ticks;
+
+    // 线程自己的文件描述符表
+    // 举例: fd_table[5] = 6, 说明该线程下标为5的文件在全局文件描述符表中下标为6
+    int32_t fd_table[MAX_FILES_OPEN_PER_PROC];
 
     struct list_elem general_tag; // 用于一般队列中的结点
 

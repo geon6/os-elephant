@@ -16,6 +16,7 @@
         "memory.h": "c",
         "ide.h": "c",
         "io.h": "c",
-        "fs.h": "c"
+        "fs.h": "c",
+        "string.h": "c"
     }
 }

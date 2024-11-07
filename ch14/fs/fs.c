@@ -192,3 +192,90 @@ void filesys_init() {
     char default_part[8] = "sdb1";
     list_traversal(&partition_list, mount_partition, (int)default_part);
 }
+
+// 例如: 输入/usr/share/xxx, 把usr parse出来, 存到name_store里面
+static char* path_parse(char* pathname, char* name_store) {
+    if (pathname[0] == '/') { // 跳过根目录
+        while (*pathname == '/') { //  ///usr/  前面很多个/都要跳过
+            pathname++;
+        }
+    }
+    while (*pathname != '/' && *pathname != 0) {
+        *name_store = *pathname;
+        name_store++;
+        pathname++;
+    }
+    if (pathname[0] == 0) {
+        return NULL;
+    }
+    return pathname;
+}
+
+int32_t path_depth_cnt(char* pathname) {
+    ASSERT(pathname != NULL);
+    char* p = pathname;
+    char name[MAX_FILE_NAME_LEN];
+    uint32_t depth = 0;
+    p = path_parse(p, name);
+    while (name[0]) {
+        depth++;
+        memset(name, 0, MAX_FILE_NAME_LEN);
+        if (p) { // p不为NULL, 就继续分析路径
+            p = path_parse(p, name);
+        }
+    }
+    return depth;
+}
+
+// 搜索到file, 就返回inode no, 否则返回-1
+static int search_file(const char* pathname, struct path_search_record* searched_record) {
+    // 如果搜索的是根目录, 直接返回根目录的信息
+    if (!strcmp(pathname, "/") || !strcmp(pathname, "/.") || !strcmp(pathname, "/..")) {
+        searched_record->parent_dir = &root_dir;
+        searched_record->file_type = FT_DIRECTORY;
+        searched_record->searched_path[0] = 0; // 搜索路径置空
+        return 0;
+    }
+
+    uint32_t path_len = strlen(pathname);
+    ASSERT(pathname[0] == '/' && path_len > 1 && path_len < MAX_PATH_LEN);
+    char* sub_path = (char*)pathname;
+    struct dir* parent_dir = &root_dir;
+    struct dir_entry dir_e;
+
+    char name[MAX_FILE_NAME_LEN] = {0};
+
+    searched_record->parent_dir = parent_dir;
+    searched_record->file_type = FT_UNKNOWN;
+    uint32_t parent_inode_no = 0;
+
+    sub_path = path_parse(sub_path, name);
+    while (name[0]) {
+        ASSERT(strlen(searched_record->searched_path) < 512);
+        strcat(searched_record->searched_path, "/");
+        strcat(searched_record->searched_path, name);
+
+        if (search_dir_entry(cur_part, parent_dir, name, &dir_e)) {
+            memset(name, 0, MAX_FILE_NAME_LEN);
+            if (sub_path) {
+                sub_path = path_parse(sub_path, name);
+            }
+            if (FT_DIRECTORY == dir_e.f_type) {
+                parent_inode_no = parent_dir->inode->i_no;
+                dir_close(parent_dir);
+                parent_dir = dir_open(cur_part, dir_e.i_no);
+                searched_record->parent_dir = parent_dir;
+                continue;
+            } else if (FT_REGULAR == dir_e.f_type) {
+                searched_record->file_type = FT_REGULAR;
+                return dir_e.i_no;
+            }
+        } else { // 找不到返回-1
+            return -1;
+        }
+    }
+    dir_close(searched_record->parent_dir);
+    searched_record->parent_dir = dir_open(cur_part, parent_inode_no);
+    searched_record->file_type = FT_DIRECTORY;
+    return dir_e.i_no;
+}
