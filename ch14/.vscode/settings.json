@@ -18,6 +18,8 @@
         "io.h": "c",
         "fs.h": "c",
         "string.h": "c",
-        "dir.h": "c"
+        "dir.h": "c",
+        "console.h": "c",
+        "syscall-init.h": "c"
     }
 }

@@ -10,6 +10,7 @@
 #include "global.h"
 #include "debug.h"
 #include "memory.h"
+#include "console.h"
 #include "file.h"
 
 struct partition* cur_part;
@@ -361,4 +362,38 @@ void filesys_init() {
     while (fd_idx < MAX_FILE_OPEN) {
         file_table[fd_idx++].fd_inode = NULL;
     }
+}
+
+// 把buf中连续count个字节写入文件描述符fd, 成功返回写入的字节数, 失败返回-1
+int32_t sys_write(int32_t fd, const void* buf, uint32_t count) {
+    if (fd < 0) {
+        printk("sys_write: fd error\n");
+        return -1;
+    }
+    if (fd == stdout_no) {
+        char tmp_buf[1024] = {0};
+        memcpy(tmp_buf, buf, count);
+        console_put_str(tmp_buf);
+        return count;
+    }
+    uint32_t global_fd = fd_local2global(fd);
+    struct file* wr_file = &file_table[global_fd];
+    if (wr_file->fd_flag & O_WRONLY || wr_file->fd_flag & O_RDWR) {
+        uint32_t bytes_written = file_write(wr_file, buf, count);
+        return bytes_written;
+    } else {
+        console_put_str("sys_write: not allowed to write file without flag O_RDWR or O_WRONLY\n");
+        return -1;
+    }
+}
+
+// 从fd读count个字节到buf中
+int32_t sys_read(int32_t fd, void* buf, uint32_t count) {
+    if (fd < 0) {
+        printk("sys_read: fd error\n");
+        return -1;
+    }
+    ASSERT(buf != NULL);
+    uint32_t global_fd = fd_local2global(fd);
+    return file_read(&file_table[global_fd], buf, count);
 }
