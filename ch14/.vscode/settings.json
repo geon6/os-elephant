@@ -17,6 +17,7 @@
         "ide.h": "c",
         "io.h": "c",
         "fs.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "dir.h": "c"
     }
 }

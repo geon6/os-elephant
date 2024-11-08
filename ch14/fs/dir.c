@@ -29,7 +29,7 @@ struct dir* dir_open(struct partition* part, uint32_t inode_no) {
 
 // 在part分区的pdir目录里, 查找名字为name的文件or目录
 // 找到后返回true, 并把目录项存到dir_e. 否则返回false
-bool search_dir_entry(struct partition* part, struct dir* pdir, char* name, struct dir_entry* dir_e) {
+bool search_dir_entry(struct partition* part, struct dir* pdir, const char* name, struct dir_entry* dir_e) {
     uint32_t block_cnt = 140; // 12个直接块, 一个一级间接块(128), 加起来140块
     uint32_t* all_blocks = (uint32_t*)sys_malloc(560); // 每个块的地址4字节, 4 * 140 = 560
     if (all_blocks == NULL) {
@@ -40,6 +40,7 @@ bool search_dir_entry(struct partition* part, struct dir* pdir, char* name, stru
     while (block_idx < 12) {
         // inode->i_sectors存放的是地址
         all_blocks[block_idx] = pdir->inode->i_sectors[block_idx];
+        block_idx++;
     }
     block_idx = 0;
 
@@ -141,9 +142,9 @@ bool sync_dir_entry(struct dir* parent_dir, struct dir_entry* p_de, void* io_buf
                 dir_inode->i_sectors[block_idx] = all_blocks[block_idx] = block_lba;
             } else if (block_idx == 12) { // 第一次分配间接块
                 dir_inode->i_sectors[12] = block_lba;
-                block_idx = -1;
-                block_idx = block_bitmap_alloc(cur_part); // 再分配一个作为间接块
-                if (block_idx == -1) { // 分配失败
+                block_lba = -1;
+                block_lba = block_bitmap_alloc(cur_part); // 再分配一个作为间接块
+                if (block_lba == 12) { // 分配失败
                     block_bitmap_idx = dir_inode->i_sectors[12] - cur_part->sb->data_start_lba;
                     bitmap_set(&cur_part->block_bitmap, block_bitmap_idx, 0);
                     dir_inode->i_sectors[12] = 0; // 把之前申请到的block还回去

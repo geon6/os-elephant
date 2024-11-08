@@ -10,6 +10,7 @@
 #include "global.h"
 #include "debug.h"
 #include "memory.h"
+#include "file.h"
 
 struct partition* cur_part;
 
@@ -147,52 +148,6 @@ static void partition_format(struct partition* part) {
     sys_free(buf);
 }
 
-// 在磁盘上搜索文件系统, 没有文件系统的话就格式化分区, 创建文件系统
-void filesys_init() {
-    uint8_t channel_no = 0, dev_no, part_idx = 0;
-    struct super_block* sb_buf = (struct super_block*)sys_malloc(SECTOR_SIZE); // 用来存储超级块
-    if (sb_buf == NULL) {
-        PANIC("alloc memory failed!");
-    }
-    printk("searching filesystem......\n");
-    while (channel_no < channel_cnt) {
-        dev_no = 0;
-        while (dev_no < 2) {
-            if (dev_no == 0) { // 跨过 hd60M.img
-                dev_no++;
-                continue;
-            }
-            struct disk* hd = &channels[channel_no].devices[dev_no];
-            struct partition* part = hd->prim_parts;
-            while (part_idx < 12) { // 4个主分区 + 8个逻辑分区
-                if (part_idx == 4) { // 开始处理逻辑分区
-                    part = hd->logic_parts;
-                }
-                if (part->sec_cnt != 0) { // 如果分区存在
-                    memset(sb_buf, 0, SECTOR_SIZE);
-                    // 将超级块读入
-                    ide_read(hd, part->start_lba + 1, sb_buf, 1);
-                    // 通过magic判断是什么文件系统
-                    if (sb_buf->magic == 0x19590318) {
-                        printk("%s has filesystem\n", part->name);
-                    } else {
-                        printk("formatting %s's partition %s......\n", hd->name, part->name);
-                        partition_format(part);
-                    }
-                }
-                part_idx++;
-                part++;
-            }
-            dev_no++;
-        }
-        channel_no++;
-    }
-    sys_free(sb_buf);
-
-    char default_part[8] = "sdb1";
-    list_traversal(&partition_list, mount_partition, (int)default_part);
-}
-
 // 例如: 输入/usr/share/xxx, 把usr parse出来, 存到name_store里面
 static char* path_parse(char* pathname, char* name_store) {
     if (pathname[0] == '/') { // 跳过根目录
@@ -211,6 +166,7 @@ static char* path_parse(char* pathname, char* name_store) {
     return pathname;
 }
 
+// 例如 /path, 返回1, /path/wuhu 返回2
 int32_t path_depth_cnt(char* pathname) {
     ASSERT(pathname != NULL);
     char* p = pathname;
@@ -278,4 +234,114 @@ static int search_file(const char* pathname, struct path_search_record* searched
     searched_record->parent_dir = dir_open(cur_part, parent_inode_no);
     searched_record->file_type = FT_DIRECTORY;
     return dir_e.i_no;
+}
+
+// 成功返回fd, 否则返回-1
+int32_t sys_open(const char* pathname, uint8_t flags) {
+    // 最后一个字符是/, 说明是目录, 这个函数只处理普通文件
+    // 目录使用dir_open
+    if (pathname[strlen(pathname) - 1] == '/') {
+        printk("can't open a directory %s\n", pathname);
+        return -1;
+    }
+    ASSERT(flags <= 7);
+    int32_t fd = -1;
+
+    struct path_search_record searched_record;
+    memset(&searched_record, 0, sizeof(struct path_search_record));
+
+    // 记录目录深度, 用于判断中间某个目录不存在的情况
+    uint32_t pathname_depth = path_depth_cnt((char*)pathname);
+
+    // 检查文件是否存在
+    int inode_no = search_file(pathname, &searched_record);
+    bool found = (inode_no != -1 ? true : false);
+
+    if (searched_record.file_type == FT_DIRECTORY) {
+        printk("can't open a directory with open(), use opendir() to instead\n");
+        dir_close(searched_record.parent_dir);
+        return -1;
+    }
+
+    uint32_t path_searched_depth = path_depth_cnt(searched_record.searched_path);
+
+    if (pathname_depth != path_searched_depth) { // 这两个数不一样, 说明中间有目录不存在
+        printk("cannot access %s: Not a directory, subpath %s is't exist\n", pathname, searched_record.searched_path);
+        dir_close(searched_record.parent_dir);
+        return -1;
+    }
+
+    if (!found && !(flags & O_CREAT)) { // 没找到, 并且不是要创建文件, 返回-1
+        printk("in path %s, file %s is`t exist\n", searched_record.searched_path, (strrchr(searched_record.searched_path, '/') + 1));
+        dir_close(searched_record.parent_dir);
+        return -1;
+    } else if (found && (flags & O_CREAT)) { // 要创建文件, 并且文件已存在, 返回-1
+        printk("%s has already exist!\n", pathname);
+        dir_close(searched_record.parent_dir);
+        return -1;
+    }
+
+    switch (flags & O_CREAT) {
+        case O_CREAT:
+            printk("creating file\n");
+            fd = file_create(searched_record.parent_dir, (strrchr(pathname, '/') + 1), flags);
+            dir_close(searched_record.parent_dir);
+            break;
+        default:
+            // fd = file_open(inode_no, flags);
+    }
+    return fd;
+}
+
+// 在磁盘上搜索文件系统, 没有文件系统的话就格式化分区, 创建文件系统
+void filesys_init() {
+    uint8_t channel_no = 0, dev_no, part_idx = 0;
+    struct super_block* sb_buf = (struct super_block*)sys_malloc(SECTOR_SIZE); // 用来存储超级块
+    if (sb_buf == NULL) {
+        PANIC("alloc memory failed!");
+    }
+    printk("searching filesystem......\n");
+    while (channel_no < channel_cnt) {
+        dev_no = 0;
+        while (dev_no < 2) {
+            if (dev_no == 0) { // 跨过 hd60M.img
+                dev_no++;
+                continue;
+            }
+            struct disk* hd = &channels[channel_no].devices[dev_no];
+            struct partition* part = hd->prim_parts;
+            while (part_idx < 12) { // 4个主分区 + 8个逻辑分区
+                if (part_idx == 4) { // 开始处理逻辑分区
+                    part = hd->logic_parts;
+                }
+                if (part->sec_cnt != 0) { // 如果分区存在
+                    memset(sb_buf, 0, SECTOR_SIZE);
+                    // 将超级块读入
+                    ide_read(hd, part->start_lba + 1, sb_buf, 1);
+                    // 通过magic判断是什么文件系统
+                    if (sb_buf->magic == 0x19590318) {
+                        printk("%s has filesystem\n", part->name);
+                    } else {
+                        printk("formatting %s's partition %s......\n", hd->name, part->name);
+                        partition_format(part);
+                    }
+                }
+                part_idx++;
+                part++;
+            }
+            dev_no++;
+        }
+        channel_no++;
+    }
+    sys_free(sb_buf);
+
+    char default_part[8] = "sdb1";
+    list_traversal(&partition_list, mount_partition, (int)default_part);
+
+    open_root_dir(cur_part);
+
+    uint32_t fd_idx = 0;
+    while (fd_idx < MAX_FILE_OPEN) {
+        file_table[fd_idx++].fd_inode = NULL;
+    }
 }
