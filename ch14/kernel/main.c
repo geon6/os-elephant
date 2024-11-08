@@ -13,6 +13,9 @@
 int main(void) {
     put_str("i am kernel\n");
     init_all();
-    sys_open("/file2", O_CREAT);
+    uint32_t fd = sys_open("/file2", O_CREAT);
+    printf("fd: %d\n", fd);
+    sys_close(fd);
+    printf("close file\n");
     while(1);
 }

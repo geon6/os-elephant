@@ -288,9 +288,26 @@ int32_t sys_open(const char* pathname, uint8_t flags) {
             dir_close(searched_record.parent_dir);
             break;
         default:
-            // fd = file_open(inode_no, flags);
+            fd = file_open(inode_no, flags);
     }
     return fd;
+}
+
+static uint32_t fd_local2global(uint32_t local_fd) {
+    struct task_struct* cur = running_thread();
+    int32_t global_fd = cur->fd_table[local_fd];
+    ASSERT(global_fd >= 0 && global_fd < MAX_FILE_OPEN);
+    return (uint32_t)global_fd;
+}
+
+int32_t sys_close(int32_t fd) {
+    int32_t ret = -1;
+    if (fd > 2) {
+        uint32_t global_fd = fd_local2global(fd);
+        ret = file_close(&file_table[global_fd]);
+        running_thread()->fd_table[fd] = -1;
+    }
+    return ret;
 }
 
 // 在磁盘上搜索文件系统, 没有文件系统的话就格式化分区, 创建文件系统

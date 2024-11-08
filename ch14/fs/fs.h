@@ -33,7 +33,11 @@ struct path_search_record {
 extern struct partition* cur_part;
 
 int32_t path_depth_cnt(char* pathname);
+
+// 针对当前线程的局部fd的open close
 int32_t sys_open(const char* pathname, uint8_t flags);
+int32_t sys_close(int32_t fd);
+
 void filesys_init();
 
 #endif
