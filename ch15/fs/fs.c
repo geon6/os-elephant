@@ -6,6 +6,8 @@
 #include "global.h"
 #include "ide.h"
 #include "inode.h"
+#include "ioqueue.h"
+#include "keyboard.h"
 #include "list.h"
 #include "memory.h"
 #include "stdint.h"
@@ -173,7 +175,7 @@ static void partition_format(struct partition* part) {
 }
 
 // 例如: 输入/usr/share/xxx, 把usr parse出来, 存到name_store里面
-static char* path_parse(char* pathname, char* name_store) {
+char* path_parse(char* pathname, char* name_store) {
     if (pathname[0] == '/') {       // 跳过根目录
         while (*pathname == '/') {  //  ///usr/  前面很多个/都要跳过
             pathname++;
@@ -416,13 +418,24 @@ int32_t sys_write(int32_t fd, const void* buf, uint32_t count) {
 
 // 从fd读count个字节到buf中
 int32_t sys_read(int32_t fd, void* buf, uint32_t count) {
-    if (fd < 0) {
-        printk("sys_read: fd error\n");
-        return -1;
-    }
     ASSERT(buf != NULL);
-    uint32_t global_fd = fd_local2global(fd);
-    return file_read(&file_table[global_fd], buf, count);
+    int32_t ret = -1;
+    if (fd < 0 || fd == stdout_no || fd == stderr_no) {
+        printk("sys_read: fd error \n");
+    } else if (fd == stdin_no) {
+        char* buffer = buf;
+        uint32_t bytes_read = 0;
+        while (bytes_read < count) {
+            *buffer = ioq_getchar(&kbd_buf);
+            bytes_read++;
+            buffer++;
+        }
+        ret = (bytes_read == 0 ? -1 : (int32_t)bytes_read);
+    } else {
+        uint32_t global_fd = fd_local2global(fd);
+        ret = file_read(&file_table[global_fd], buf, count);
+    }
+    return ret;
 }
 
 // lseek, 根据whence对fd进行offset
@@ -857,4 +870,8 @@ int32_t sys_stat(const char* path, struct stat* buf) {
     }
     dir_close(searched_record.parent_dir);
     return ret;
+}
+
+void sys_putchar(char char_asci) {
+    console_put_char(char_asci);
 }

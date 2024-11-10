@@ -20,6 +20,7 @@
         "string.h": "c",
         "dir.h": "c",
         "console.h": "c",
-        "syscall-init.h": "c"
+        "syscall-init.h": "c",
+        "print.h": "c"
     }
 }
