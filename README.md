@@ -36,3 +36,9 @@
 * 2024/11/9, 14-14 cwd, chdir...
 * 2024/11/9, 14-15 sys_stat, 用于ls...
 * 2024/11/10, 15-4, shell, syscall, builtin command
+
+## misc
+* 电子书: [pdf](https://rec.ustc.edu.cn/share/01e44ab0-9f65-11ef-933f-f1d9b8d09155)
+* 书中有些许勘误, 可从网上找博客校对
+* bochs不知道去哪下载的, 这里提供一个版本 [bochs-2.6.8](https://rec.ustc.edu.cn/share/6a72c9d0-9f65-11ef-ba4e-17ccf9b460fb)
+* 个人认为本书比较啰嗦, 没读过其他类似的书, 没法做对比
