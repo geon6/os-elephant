@@ -1,9 +1,9 @@
 #include "stdio.h"
-#include "interrupt.h"
 #include "global.h"
+#include "interrupt.h"
+#include "print.h"
 #include "string.h"
 #include "syscall.h"
-#include "print.h"
 
 #define va_start(ap, v) ap = (va_list)&v
 #define va_arg(ap, t) *((t*)(ap += 4))
@@ -13,12 +13,10 @@
 static void itoa(uint32_t value, char** buf_ptr_addr, uint8_t base) {
     uint32_t m = value % base;
     uint32_t i = value / base;
-    if (i) {
-        itoa(i, buf_ptr_addr, base);
-    }
-    if (m < 10) { // 0 - 9
+    if (i) { itoa(i, buf_ptr_addr, base); }
+    if (m < 10) {  // 0 - 9
         *((*buf_ptr_addr)++) = m + '0';
-    } else { // A - F
+    } else {  // A - F
         *((*buf_ptr_addr)++) = m - 10 + 'A';
     }
 }

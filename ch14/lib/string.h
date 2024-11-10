@@ -11,7 +11,6 @@ void memcpy(void* dst_, const void* src_, uint32_t size);
 
 int memcmp(const void* a_, const void* b_, uint32_t size);
 
-
 // ----- str ------
 
 char* strcpy(char* dst_, const char* src_);

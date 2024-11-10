@@ -1,16 +1,16 @@
 #include "ide.h"
-#include "sync.h"
-#include "string.h"
-#include "debug.h"
-#include "memory.h"
-#include "interrupt.h"
-#include "stdio.h"
-#include "stdio-kernel.h"
-#include "timer.h"
-#include "list.h"
 #include "console.h"
-#include "io.h"
+#include "debug.h"
 #include "global.h"
+#include "interrupt.h"
+#include "io.h"
+#include "list.h"
+#include "memory.h"
+#include "stdio-kernel.h"
+#include "stdio.h"
+#include "string.h"
+#include "sync.h"
+#include "timer.h"
 
 #define reg_data(channel) (channel->port_base + 0)
 #define reg_error(channel) (channel->port_base + 1)
@@ -24,55 +24,55 @@
 #define reg_alt_status(channel) (channel->port_base + 0x206)
 #define ret_ctl(channel) reg_alt_status(channel)
 
-#define BIT_STAT_BSY    0x80 // status busy
-#define BIT_STAT_DRDY   0x40 // status driver ready
-#define BIT_STAT_DRQ    0x8  // status data request 表示数据准备好了, 可以传输了
+#define BIT_STAT_BSY 0x80   // status busy
+#define BIT_STAT_DRDY 0x40  // status driver ready
+#define BIT_STAT_DRQ 0x8  // status data request 表示数据准备好了, 可以传输了
 
 // device寄存器的一些位
-#define BIT_DEV_MBS     0xa0    // 7和5位固定为1
-#define BIT_DEV_LBA     0x40
-#define BIT_DEV_DEV     0x10
+#define BIT_DEV_MBS 0xa0  // 7和5位固定为1
+#define BIT_DEV_LBA 0x40
+#define BIT_DEV_DEV 0x10
 
 // 磁盘操作的指令
-#define CMD_IDENTIFY        0xec    // identify指令
-#define CMD_READ_SECTOR     0x20    // 读扇区指令
-#define CMD_WRITE_SECTOR    0x30    // 写扇区指令
+#define CMD_IDENTIFY 0xec      // identify指令
+#define CMD_READ_SECTOR 0x20   // 读扇区指令
+#define CMD_WRITE_SECTOR 0x30  // 写扇区指令
 
-#define max_lba ((80 * 1024 * 1024 / 512) - 1) // 调试用, 最大扇区数
+#define max_lba ((80 * 1024 * 1024 / 512) - 1)  // 调试用, 最大扇区数
 
-uint8_t channel_cnt; // 按硬盘数计算的通道数
-struct ide_channel channels[2]; // 两个ide通道
+uint8_t channel_cnt;             // 按硬盘数计算的通道数
+struct ide_channel channels[2];  // 两个ide通道
 
 // 记录总拓展分区的起始lba, 初始为0
 int32_t ext_lba_base = 0;
 
-uint8_t p_no = 0, l_no = 0; // 用来记录主分区和逻辑分区的下标
+uint8_t p_no = 0, l_no = 0;  // 用来记录主分区和逻辑分区的下标
 
-struct list partition_list; // 分区队列
+struct list partition_list;  // 分区队列
 
 // 大小16B的分区表项
 struct partition_table_entry {
-    uint8_t bootable;   // 是否可引导
-    uint8_t strat_head; // 起始磁头号
-    uint8_t start_sec;  // 起始扇区号
-    uint8_t start_chs;  // 起始柱面号
-    uint8_t fs_type;    // 分区类型
-    uint8_t end_head;   // 结束磁头号
-    uint8_t end_sec;    // 结束扇区号
-    uint8_t end_chs;    // 结束柱面号
-    uint32_t start_lba; // 起始扇区的lba地址
-    uint32_t sec_cnt;   // 本分区的扇区数目
-} __attribute__ ((packed));
+    uint8_t bootable;    // 是否可引导
+    uint8_t strat_head;  // 起始磁头号
+    uint8_t start_sec;   // 起始扇区号
+    uint8_t start_chs;   // 起始柱面号
+    uint8_t fs_type;     // 分区类型
+    uint8_t end_head;    // 结束磁头号
+    uint8_t end_sec;     // 结束扇区号
+    uint8_t end_chs;     // 结束柱面号
+    uint32_t start_lba;  // 起始扇区的lba地址
+    uint32_t sec_cnt;    // 本分区的扇区数目
+} __attribute__((packed));
 
 struct boot_sector {
-    uint8_t other[446]; // 引导代码446B
+    uint8_t other[446];  // 引导代码446B
     struct partition_table_entry partition_table[4];
-    uint16_t signature; // 结束的2字节魔数 0x55, 0xaa
-} __attribute__ ((packed));
+    uint16_t signature;  // 结束的2字节魔数 0x55, 0xaa
+} __attribute__((packed));
 
 static void select_disk(struct disk* hd) {
     uint32_t reg_device = BIT_DEV_MBS | BIT_DEV_LBA;
-    if (hd->dev_no == 1) { // 从盘, dev位置1
+    if (hd->dev_no == 1) {  // 从盘, dev位置1
         reg_device |= BIT_DEV_DEV;
     }
     outb(reg_dev(hd->my_channel), reg_device);
@@ -83,11 +83,12 @@ static void select_sector(struct disk* hd, uint32_t lba, uint8_t sec_cnt) {
     ASSERT(lba <= max_lba);
     struct ide_channel* channel = hd->my_channel;
     outb(reg_sect_cnt(channel), sec_cnt);
-    outb(reg_lba_l(channel), lba);       // 0  -  7位
-    outb(reg_lba_m(channel), lba >> 8);  // 8  - 15位
-    outb(reg_lba_h(channel), lba >> 16); // 16 - 23位
+    outb(reg_lba_l(channel), lba);        // 0  -  7位
+    outb(reg_lba_m(channel), lba >> 8);   // 8  - 15位
+    outb(reg_lba_h(channel), lba >> 16);  // 16 - 23位
 
-    outb(reg_dev(channel), BIT_DEV_MBS | BIT_DEV_LBA | (hd->dev_no == 1 ? BIT_DEV_DEV : 0) | lba >> 24);
+    outb(reg_dev(channel), BIT_DEV_MBS | BIT_DEV_LBA |
+                               (hd->dev_no == 1 ? BIT_DEV_DEV : 0) | lba >> 24);
 }
 
 // 向通道channel发送命令cmd
@@ -124,12 +125,12 @@ static void write2sector(struct disk* hd, void* buf, uint8_t sec_cnt) {
 // 检测硬盘DRQ, 最多等待30秒
 static bool busy_wait(struct disk* hd) {
     struct ide_channel* channel = hd->my_channel;
-    uint16_t time_limit = 30 * 1000; // 30秒
+    uint16_t time_limit = 30 * 1000;  // 30秒
     while (time_limit -= 10 >= 0) {
         if (!(inb(reg_status(channel)) & BIT_STAT_BSY)) {
             return (inb(reg_status(channel)) & BIT_STAT_DRQ);
         } else {
-            mtime_sleep(10); // sleep 10毫秒
+            mtime_sleep(10);  // sleep 10毫秒
         }
     }
     return false;
@@ -143,8 +144,8 @@ void ide_read(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {
 
     // 选择操作的硬盘
     select_disk(hd);
-    uint32_t secs_op; // 每次操作的扇区数
-    uint32_t secs_done = 0; // 已完成的扇区数
+    uint32_t secs_op;        // 每次操作的扇区数
+    uint32_t secs_done = 0;  // 已完成的扇区数
     while (secs_done < sec_cnt) {
         // secs_op是每次操作的扇区数, 默认为256, 不够256就用不够的数
         if ((secs_done + 256) <= sec_cnt) {
@@ -181,7 +182,7 @@ void ide_write(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {
     ASSERT(lba <= max_lba);
     ASSERT(sec_cnt > 0);
     lock_acquire(&hd->my_channel->lock);
-    
+
     // 选择硬盘
     select_disk(hd);
 
@@ -257,7 +258,7 @@ static void partition_scan(struct disk* hd, uint32_t ext_lba) {
 
     // 遍历4个分区表
     while (part_idx++ < 4) {
-        if (p->fs_type == 0x5) { // 拓展分区
+        if (p->fs_type == 0x5) {  // 拓展分区
             if (ext_lba_base != 0) {
                 partition_scan(hd, p->start_lba + ext_lba_base);
             } else {
@@ -280,8 +281,7 @@ static void partition_scan(struct disk* hd, uint32_t ext_lba) {
                 list_append(&partition_list, &hd->logic_parts[l_no].part_tag);
                 sprintf(hd->logic_parts[l_no].name, "%s%d", hd->name, l_no + 5);
                 l_no++;
-                if (l_no >= 8) 
-                    return;
+                if (l_no >= 8) return;
             }
         }
         p++;
@@ -292,7 +292,8 @@ static void partition_scan(struct disk* hd, uint32_t ext_lba) {
 // 打印分区信息
 static bool partition_info(struct list_elem* pelem, int arg UNUSED) {
     struct partition* part = elem2entry(struct partition, part_tag, pelem);
-    printk("    %s start_lba:0x%x, sec_cnt:0x%x\n", part->name, part->start_lba, part->sec_cnt);
+    printk("    %s start_lba:0x%x, sec_cnt:0x%x\n", part->name, part->start_lba,
+           part->sec_cnt);
     return false;
 }
 
@@ -300,7 +301,7 @@ static bool partition_info(struct list_elem* pelem, int arg UNUSED) {
 void intr_hd_handler(uint8_t irq_no) {
     // 中断向量号只有0x2e和0x2f两个
     ASSERT(irq_no == 0x2e || irq_no == 0x2f);
-    uint8_t ch_no = irq_no - 0x2e; // 主channel还是从
+    uint8_t ch_no = irq_no - 0x2e;  // 主channel还是从
     struct ide_channel* channel = &channels[ch_no];
     ASSERT(channel->irq_no == irq_no);
     if (channel->expecting_intr) {
@@ -313,7 +314,7 @@ void intr_hd_handler(uint8_t irq_no) {
 // 硬盘数据结构初始化
 void ide_init() {
     printk("ide_init start\n");
-    uint8_t hd_cnt = *((uint8_t*)(0x475)); // 硬盘数量
+    uint8_t hd_cnt = *((uint8_t*)(0x475));  // 硬盘数量
     printk("   ide_init hd_cnt:%d\n", hd_cnt);
     ASSERT(hd_cnt > 0);
     list_init(&partition_list);
@@ -352,9 +353,7 @@ void ide_init() {
             hd->dev_no = dev_no;
             sprintf(hd->name, "sd%c", 'a' + channel_no * 2 + dev_no);
             identify_disk(hd);
-            if (dev_no != 0) {
-                partition_scan(hd, 0);
-            }
+            if (dev_no != 0) { partition_scan(hd, 0); }
             p_no = 0, l_no = 0;
             dev_no++;
         }

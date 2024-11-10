@@ -1,21 +1,18 @@
 #ifndef __KERNEL_MEMORY_H
 #define __KERNEL_MEMORY_H
 
-#include "stdint.h"
 #include "bitmap.h"
 #include "list.h"
+#include "stdint.h"
 
 // 内存池标记, 用于判断用哪个内存池
-enum pool_flags {
-    PF_KERNEL = 1,
-    PF_USER = 2
-};
+enum pool_flags { PF_KERNEL = 1, PF_USER = 2 };
 
-#define PG_P_1  1       // page的present位, 代表是否存在于内存
-#define PG_P_0  0
-#define PG_RW_R 0       // 读写权限, 0表示读/执行
-#define PG_RW_W 2       // 2表示读/写/执行
-#define PG_US_S 0       // user or system, 特权级
+#define PG_P_1 1  // page的present位, 代表是否存在于内存
+#define PG_P_0 0
+#define PG_RW_R 0  // 读写权限, 0表示读/执行
+#define PG_RW_W 2  // 2表示读/写/执行
+#define PG_US_S 0  // user or system, 特权级
 #define PG_US_U 4
 
 // 虚拟地址池, 用于虚拟地址管理
