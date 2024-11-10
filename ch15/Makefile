@@ -19,7 +19,7 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 	$(BUILD_DIR)/stdio.o $(BUILD_DIR)/ide.o $(BUILD_DIR)/stdio-kernel.o \
 	$(BUILD_DIR)/fs.o $(BUILD_DIR)/inode.o $(BUILD_DIR)/file.o \
 	$(BUILD_DIR)/dir.o $(BUILD_DIR)/fork.o $(BUILD_DIR)/shell.o \
-	$(BUILD_DIR)/assert.o $(BUILD_DIR)/builtin_cmd.o
+	$(BUILD_DIR)/assert.o $(BUILD_DIR)/builtin_cmd.o $(BUILD_DIR)/userprog/exec.o 
 
 boot: $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
 # mbr
@@ -116,6 +116,9 @@ $(BUILD_DIR)/assert.o: lib/user/assert.c
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/builtin_cmd.o: shell/builtin_cmd.c
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/exec.o: userprog/exec.c
 	$(CC) $(CFLAGS) $< -o $@
 
 # asm

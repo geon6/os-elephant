@@ -21,7 +21,7 @@ void init_all() {
     keyboard_init();
     tss_init();
     syscall_init();
-    intr_enable(); // ide init需要打开中断
+    intr_enable();  // ide init需要打开中断
     ide_init();
     filesys_init();
 }

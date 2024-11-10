@@ -17,6 +17,9 @@ void init();
 int main(void) {
     put_str("I am kernel\n");
     init_all();
+
+    uint32_t file_size = 4777;
+
     cls_screen();
     console_put_str("[geon6@localhost /]$ ");
     while (1) {}
